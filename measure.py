@@ -3,28 +3,24 @@ import csv
 import time
 from datetime import datetime
 
-# --- KONFIGURATION ---
-# Ersetze 'COM3' durch deinen Port (z.B. 'COM4' bei Windows oder '/dev/ttyUSB0' bei Linux/Mac)
 SERIAL_PORT = "COM3"
 BAUD_RATE = 9600
 DATEI_NAME = "co2_messdaten.csv"
-INTERVALL = 10  # Intervall in Sekunden (10 Minuten)
+INTERVALL = 10  # Intervall in Sekunden
 
 
 def start_logging():
     try:
-        # Verbindung zum Arduino herstellen
+        # verbindung zu serial port herstellen
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-        time.sleep(2)  # Kurz warten, bis der Arduino nach dem Verbinden neu startet
+        time.sleep(2)
         print(
-            f"Verbindung hergestellt mit {SERIAL_PORT}. Logge Daten in {DATEI_NAME}..."
+            f"Verbindung hergestellt mit {SERIAL_PORT}. Speichere Daten in {DATEI_NAME}..."
         )
 
-        # Datei öffnen (Modul 'a' steht für Append = Anhängen)
         with open(DATEI_NAME, mode="a", newline="") as file:
             writer = csv.writer(file)
 
-            # Falls die Datei neu ist, Kopfzeile schreiben
             if file.tell() == 0:
                 writer.writerow(["Datum", "Uhrzeit", "CO2_Wert_ppm"])
 
@@ -32,7 +28,7 @@ def start_logging():
 
             while True:
                 if ser.in_waiting > 0:
-                    # Daten vom Arduino lesen und säubern
+                    # Daten von Port lesen und säubern
                     line = ser.readline().decode("utf-8").strip()
                     aktueller_zeitpunkt = time.time()
 
@@ -44,20 +40,20 @@ def start_logging():
                             datum = jetzt.strftime("%Y-%m-%d")
                             uhrzeit = jetzt.strftime("%H:%M:%S")
 
-                            # In Datei schreiben
+                            # CSV header schreiben
                             writer.writerow([datum, uhrzeit, line])
-                            file.flush()  # Sofort auf Festplatte speichern (wichtig bei Absturz)
+                            file.flush()  # Sofort speichern falls absturz
 
-                            print(f"Gespeichert: {datum} {uhrzeit} -> {line} ppm")
+                            print(f"Saved: {datum} {uhrzeit} | {line} ppm")
                             letzte_messung = aktueller_zeitpunkt
 
     except serial.SerialException:
-        print("Fehler: Konnte keine Verbindung zum Arduino finden. Port prüfen!")
+        print("Error: Keine Verbindung zu Serial Port möglich!")
     except KeyboardInterrupt:
-        print("\nLogging durch Benutzer beendet.")
+        print("\nLogging durch Benutzer beendet")
     finally:
         if "ser" in locals():
-            ser.close()
+            ser.close()  #  Serial port schließen
 
 
 if __name__ == "__main__":
