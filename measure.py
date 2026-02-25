@@ -22,7 +22,7 @@ def start_logging():
             writer = csv.writer(file)
 
             if file.tell() == 0:
-                writer.writerow(["Datum", "Uhrzeit", "CO2_Wert_ppm"])
+                writer.writerow(["Datum", "Uhrzeit", "ADC_Wert"])
 
             letzte_messung = 0
 

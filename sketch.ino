@@ -1,19 +1,16 @@
-int ppin = 21; // Piezo pin
-int apin = 34; // Analog pin for Poty
+
+int apin = 34; // Analog Pin für Poti
 int val;
+int mval;
 
 void setup()
 {
     Serial.begin(9600);
-    pinMode(21, OUTPUT);
 }
 
 void loop()
 {
-
     val = analogRead(apin);
-
-    tone(21, val);
-
-    Serial.println(val);
+    mval = map(val, 0, 4095, 0, 1024);
+    Serial.println(mval);
 }
