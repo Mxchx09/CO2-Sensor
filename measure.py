@@ -5,7 +5,7 @@ from datetime import datetime
 
 SERIAL_PORT = "COM3"
 BAUD_RATE = 9600
-DATEI_NAME = "co2_messdaten.csv"
+DATEI_NAME = "Aufheizdaten.csv"
 INTERVALL = 10  # Intervall in Sekunden
 
 

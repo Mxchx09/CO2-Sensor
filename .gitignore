@@ -1,5 +1,7 @@
 .mypy_cache/
 
-*.odt
+.vscode/
+
+.venv/
 
 *.csv
