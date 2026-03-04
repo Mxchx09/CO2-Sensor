@@ -14,17 +14,17 @@ def adc_to_ppm(adc_value):
         # Schutz gegen kaputte oder extrem kleine Werte
         if adc_value <= 5:
             return 0
-        
 
-        RL = 10.0
-        R0 = 150.0  # fix nach Kalibrierung
-        A = 116.6020682
-        B = -2.7690348573069232096715545
+        RL = 10.0  # Lastwiderstand in Ohm
+        R0 = 150.0  # Sensor-Widerstand bei 400ppm nach Kalibrierung in Ohm
+        A = 116.6020682  # Konstante
+        B = -2.7690348573069232096715545  # Konstante
 
         rs = RL * (1023 - adc_value) / adc_value
         ppm = A * ((rs / R0) ** B)
+
         # Plausibilitäts-Clamp
-        if ppm < 0 or ppm > 100000:
+        if ppm < 0 or ppm > 25000:
             return 0
 
         return round(ppm, 2)
@@ -40,7 +40,7 @@ def start_logging():
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
         time.sleep(2)
 
-        print(f"Logging gestartet – speichere in {DATEI_NAME}")
+        print(f"Logging gestartet - speichere in {DATEI_NAME}")
 
         with open(DATEI_NAME, mode="a", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
