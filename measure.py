@@ -6,22 +6,82 @@ from datetime import datetime
 SERIAL_PORT = "COM3"
 BAUD_RATE = 9600
 DATEI_NAME = "Aufheizdaten.csv"
-INTERVALL = 10  # Sekunden
+INTERVALL = 2  # Sekunden
+
+ADC_MAX = 1023.0  # sketch_old.ino nutzt default 10-bit ADC
+RL = 10000.0  # Lastwiderstand in Ohm
+R0 = 150.0  # Fallback-Wert, kann per Kalibrierung ersetzt werden
+A = 116.6020682
+B = -2.769034857306923
+FRESH_AIR_PPM = 420.0
+
+AUTO_KALIBRIERUNG = True
+KALIBRIER_DAUER_SEKUNDEN = 60
 
 
-def adc_to_ppm(adc_value):
+def calculate_rs_from_adc(adc_value):
+    if adc_value <= 5 or adc_value >= ADC_MAX:
+        return None
+
+    return RL * (ADC_MAX - adc_value) / adc_value
+
+
+def calculate_r0_from_adc(adc_value, reference_ppm=FRESH_AIR_PPM):
+    rs = calculate_rs_from_adc(adc_value)
+    if rs is None:
+        return None
+
+    ratio = (reference_ppm / A) ** (1.0 / B)
+    if ratio <= 0:
+        return None
+
+    return rs / ratio
+
+
+def kalibriere_r0(ser, dauer_sekunden=KALIBRIER_DAUER_SEKUNDEN):
+    print(
+        f"R0-Kalibrierung läuft {dauer_sekunden}s in Frischluft (~{int(FRESH_AIR_PPM)} ppm)..."
+    )
+
+    samples = []
+    start = time.time()
+
+    while time.time() - start < dauer_sekunden:
+        if ser.in_waiting > 0:
+            line = ser.readline().decode("utf-8", errors="ignore").strip()
+            if line.isdigit():
+                adc_val = int(line)
+                if 5 < adc_val < ADC_MAX:
+                    samples.append(adc_val)
+
+        time.sleep(0.05)
+
+    if not samples:
+        raise RuntimeError("Keine gültigen ADC-Samples für R0-Kalibrierung erhalten.")
+
+    adc_mittel = sum(samples) / len(samples)
+    r0_neu = calculate_r0_from_adc(adc_mittel)
+
+    if r0_neu is None or r0_neu <= 0:
+        raise RuntimeError("R0 konnte aus den Samples nicht berechnet werden.")
+
+    print(
+        f"Kalibrierung abgeschlossen: ADC-Mittel={adc_mittel:.2f}, R0={r0_neu:.2f} Ohm ({len(samples)} Samples)"
+    )
+    return r0_neu
+
+
+def adc_to_ppm(adc_value, r0_value):
     try:
         # Schutz gegen kaputte oder extrem kleine Werte
         if adc_value <= 5:
             return 0
 
-        RL = 10.0  # Lastwiderstand in Ohm
-        R0 = 150.0  # Sensor-Widerstand bei 400ppm nach Kalibrierung in Ohm
-        A = 116.6020682  # Konstante
-        B = -2.7690348573069232096715545  # Konstante
+        rs = calculate_rs_from_adc(adc_value)
+        if rs is None or r0_value <= 0:
+            return 0
 
-        rs = RL * (1023 - adc_value) / adc_value
-        ppm = A * ((rs / R0) ** B)
+        ppm = A * ((rs / r0_value) ** B)
 
         # Plausibilitäts-Clamp
         if ppm < 0 or ppm > 25000:
@@ -39,6 +99,12 @@ def start_logging():
     try:
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
         time.sleep(2)
+
+        r0_aktiv = R0
+        if AUTO_KALIBRIERUNG:
+            r0_aktiv = kalibriere_r0(ser)
+
+        print(f"Aktives R0: {r0_aktiv:.2f} Ohm")
 
         print(f"Logging gestartet - speichere in {DATEI_NAME}")
 
@@ -64,7 +130,7 @@ def start_logging():
                         continue
 
                     adc_val = int(line)
-                    ppm = adc_to_ppm(adc_val)
+                    ppm = adc_to_ppm(adc_val, r0_aktiv)
 
                     jetzt = datetime.now()
                     datum = jetzt.strftime("%Y-%m-%d")
