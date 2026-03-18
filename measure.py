@@ -5,7 +5,7 @@ from datetime import datetime
 
 SERIAL_PORT = "COM3"
 BAUD_RATE = 9600
-DATEI_NAME = "Aufheizdaten.csv"
+DATEI_NAME = "aufheizdaten.csv"
 INTERVALL = 2  # Sekunden
 
 ADC_MAX = 1023.0  # sketch_old.ino nutzt default 10-bit ADC
