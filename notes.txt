@@ -1,0 +1,1 @@
+RL: ~1kOhm (0.9 kOhm)
