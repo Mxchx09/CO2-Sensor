@@ -1,7 +1,6 @@
+int apin = A0;
 
-int apin = 34; // Analog Pin für Poti
 int val;
-int mval;
 
 void setup()
 {
@@ -11,6 +10,5 @@ void setup()
 void loop()
 {
     val = analogRead(apin);
-    mval = map(val, 0, 4095, 0, 1024);
-    Serial.println(mval);
+    Serial.println(val);
 }
