@@ -9,9 +9,9 @@ BAUD_RATE = 9600
 FILE_NAME = "tmp.csv"
 MEASURE_INTERVALL = 2  # Sekunden
 
-ADC_MAX = 1023.0  # sketch_old.ino nutzt default 10-bit ADC
+ADC_MAX = 1023.0  # sketch.ino nutzt default 10-bit ADC
 """
-RL = 10000.0  # Lastwiderstand in Ohm
+rs = 10000.0  # Lastwiderstand in Ohm
 R0 = 150.0  # Fallback-Wert, kann per Kalibrierung ersetzt werden
 A = 116.6020682
 B = -2.769034857306923
@@ -23,7 +23,7 @@ B = -2.769034857306923
 # Fallback
 R0 = 1000
 
-RL = 1000  # R zw. GND u. A0 [OHM]
+rs = 1000  # R zw. GND u. A0 [OHM]
 FRESH_AIR_PPM = 420.0
 CALIBRATION_FILE = "calibration.txt"
 
@@ -50,7 +50,7 @@ def calculate_rs_from_adc(adc_value):
     if adc_value <= 5 or adc_value >= ADC_MAX:
         return None
 
-    return RL * (ADC_MAX - adc_value) / adc_value
+    return rs * (ADC_MAX - adc_value) / adc_value
 
 
 def calculate_r0_from_adc(adc_value, reference_ppm=FRESH_AIR_PPM):
@@ -117,7 +117,7 @@ def adc_to_ppm(adc_value, r0_value):
         if ppm < 0 or ppm > 25000:
             return 0
 
-        return round(ppm, 2)
+        return max(0, round(ppm, 2))
 
     except Exception as e:
         print(f"Fehler in der Berechnung: {e}")
