@@ -4,7 +4,7 @@
 
 .venv/
 
-.md
+*.md
 *.docx
 
 .vscode/
