@@ -4,3 +4,10 @@
 
 .venv/
 
+.md
+*.docx
+
+.vscode/
+notes.txt
+test.py
+tmp.csv

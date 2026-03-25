@@ -4,33 +4,29 @@ from datetime import datetime
 
 import serial
 
-# ====================== KONFIGURATION ======================
 SERIAL_PORT = "COM3"
 BAUD_RATE = 9600
 FILE_NAME = "co2_messungen.csv"
 MEASURE_INTERVAL = 2  # Sekunden zwischen Messungen
 
-ADC_MAX = 1023.0  # 10-bit ADC des Arduino
+ADC_MAX = 1023.0  # 10-bit ADC Arduino
 
-RL = 1000.0  # Lastwiderstand (Load Resistor) in Ohm
-# Typische Werte auf MQ-135-Modulen: 1000 oder 10000 Ohm → unbedingt nachmessen!
+RL = 1000.0  # Lastwiderstand
 
-FRESH_AIR_PPM = 420.0  # Aktueller atmosphärischer CO₂-Wert (ca. 420 ppm)
+FRESH_AIR_PPM = 420.0
 CALIBRATION_FILE = "calibration.txt"
-AUTO_KALIBRIERUNG = True
-CALIBRATION_LENGTH = 120  # Sekunden (2 Minuten sind besser als 60s)
+AUTO_KALIBRIERUNG = False
+CALIBRATION_LENGTH = 120
 
-# Sensorkennlinien-Parameter (aus Davide Gironi Regression)
+# Konstanten
 A = 116.6020682
 B = -2.769034857306923
 
-# Fallback-Wert, falls keine Kalibrierung vorhanden ist
+# Fallback-Wert
 R0_FALLBACK = 1000.0
-# ===========================================================
 
 
 def load_r0_from_file():
-    """Lädt gespeichertes R0 aus calibration.txt"""
     try:
         with open(CALIBRATION_FILE, "r", encoding="utf-8") as f:
             r0 = float(f.readline().strip())
@@ -43,25 +39,20 @@ def load_r0_from_file():
 
 
 def calculate_rs_from_adc(adc_value):
-    """Berechnet den Sensorwiderstand Rs aus dem ADC-Wert (korrekte Formel)"""
     if adc_value <= 5 or adc_value >= ADC_MAX:
         return None
 
-    # Korrekte Spannungsteiler-Formel für MQ-Sensoren
     return RL * (ADC_MAX / adc_value - 1.0)
 
 
 def calculate_r0_from_rs(rs, reference_ppm=FRESH_AIR_PPM):
-    """Berechnet R0 aus Rs und Referenz-CO₂-Wert (saubere mathematische Form)"""
     if rs is None or rs <= 0:
         return None
 
-    # Schöne und korrekte Form: R0 = Rs * (A / PPM_ref)^(-1/B)
     return rs * (A / reference_ppm) ** (-1.0 / B)
 
 
 def calibrate_r0(ser):
-    """Führt eine automatische R0-Kalibrierung in Frischluft durch"""
     print(
         f"R0-Kalibrierung gestartet: {CALIBRATION_LENGTH} Sekunden in Frischluft (~{int(FRESH_AIR_PPM)} ppm)"
     )
@@ -96,7 +87,6 @@ def calibrate_r0(ser):
     print(f"   Rs Mittelwert  : {rs_avg:.1f} Ohm")
     print(f"   Neuer R0-Wert  : {r0_new:.2f} Ohm  ({len(samples)} Samples)")
 
-    # Speichern
     with open(CALIBRATION_FILE, "w", encoding="utf-8") as f:
         f.write(f"{r0_new}\n")
 
@@ -104,7 +94,6 @@ def calibrate_r0(ser):
 
 
 def adc_to_ppm(adc_value, r0_value):
-    """Hauptfunktion: Wandelt ADC-Wert in CO₂-Konzentration (ppm) um"""
     try:
         if adc_value <= 5:
             return 0.0
@@ -113,11 +102,9 @@ def adc_to_ppm(adc_value, r0_value):
         if rs is None or r0_value <= 0:
             return 0.0
 
-        # Kernformel: ppm = A * (Rs / R0)^B
         ratio = rs / r0_value
         ppm = A * (ratio**B)
 
-        # Plausibilitätsprüfung
         if ppm < 0 or ppm > 25000:
             return 0.0
 
@@ -132,9 +119,8 @@ def main():
     ser = None
     try:
         ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-        time.sleep(2)  # Arduino booten lassen
+        time.sleep(2)
 
-        # R0 bestimmen
         if AUTO_KALIBRIERUNG:
             r0_active = calibrate_r0(ser)
         else:
@@ -153,7 +139,6 @@ def main():
         with open(FILE_NAME, mode="a", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
 
-            # Header nur schreiben, wenn Datei neu ist
             if file.tell() == 0:
                 writer.writerow(["Datum", "Uhrzeit", "ADC", "Rs_Ohm", "PPM_CO2"])
 
