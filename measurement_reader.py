@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-DATEI_NAME = "co2_messdaten.csv"
+DATEI_NAME =  "co2_messungen.csv"
 
 
 def plot_weekly_data():
@@ -18,7 +18,7 @@ def plot_weekly_data():
         df["Zeitstempel"] = pd.to_datetime(df["Datum"] + " " + df["Uhrzeit"])
 
         # CO2-Werte in Zahlen umwandeln (falls nötig)
-        df["CO2_Wert_ppm"] = pd.to_numeric(df["CO2_Wert_ppm"], errors="coerce")
+        df["PPM_CO2"] = pd.to_numeric(df["PPM_CO2"], errors="coerce")
 
         # 3. Kalenderwoche und Jahr extrahieren
         df["Woche"] = df["Zeitstempel"].dt.isocalendar().week
@@ -33,7 +33,7 @@ def plot_weekly_data():
             # Linie zeichnen
             plt.plot(
                 daten["Zeitstempel"],
-                daten["CO2_Wert_ppm"],
+                daten["PPM_CO2"],
                 label=f"CO2 Gehalt (ppm)",
                 color="teal",
             )
