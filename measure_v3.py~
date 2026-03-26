@@ -15,7 +15,7 @@ RL = 1000.0  # Lastwiderstand
 
 FRESH_AIR_PPM = 420.0
 CALIBRATION_FILE = "calibration.txt"
-AUTO_KALIBRIERUNG = True
+AUTO_KALIBRIERUNG = False
 CALIBRATION_LENGTH = 120
 
 # Konstanten
@@ -82,9 +82,10 @@ def calibrate_r0(ser):
     if r0_new is None or r0_new <= 0:
         raise RuntimeError("R0 konnte nicht berechnet werden.")
 
-    print(f"ADC Mittelwert : {adc_avg:.1f}")
-    print(f"Rs Mittelwert  : {rs_avg:.1f} Ohm")
-    print(f"Neuer R0-Wert  : {r0_new:.2f} Ohm  ({len(samples)} Samples)")
+    print("Kalibrierung erfolgreich!")
+    print(f"   ADC Mittelwert : {adc_avg:.1f}")
+    print(f"   Rs Mittelwert  : {rs_avg:.1f} Ohm")
+    print(f"   Neuer R0-Wert  : {r0_new:.2f} Ohm  ({len(samples)} Samples)")
 
     with open(CALIBRATION_FILE, "w", encoding="utf-8") as f:
         f.write(f"{r0_new}\n")
@@ -126,12 +127,14 @@ def main():
             r0_active = load_r0_from_file()
             if r0_active is None:
                 r0_active = R0_FALLBACK
-                print(f"Kein gespeichertes R0 gefunden. Fallback: {r0_active:.2f} Ohm")
+                print(
+                    f"Kein gespeichertes R0 gefunden → verwende Fallback: {r0_active:.2f} Ohm"
+                )
 
         print(
-            f"\nR0: {r0_active:.2f} | RL = {RL:.0f} | Intervall = {MEASURE_INTERVAL}s\n"
+            f"\nAktives R0: {r0_active:.2f} Ohm | RL = {RL:.0f} Ohm | Messintervall = {MEASURE_INTERVAL}s\n"
         )
-        print(f"Speichern gestartet\nDatei: {FILE_NAME}")
+        print(f"Logging gestartet → Datei: {FILE_NAME}")
 
         with open(FILE_NAME, mode="a", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
