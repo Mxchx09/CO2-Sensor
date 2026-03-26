@@ -15,7 +15,7 @@ RL = 1000.0  # Lastwiderstand
 
 FRESH_AIR_PPM = 420.0
 CALIBRATION_FILE = "calibration.txt"
-AUTO_KALIBRIERUNG = True
+AUTO_KALIBRIERUNG = False  # !Wichtig: False!
 CALIBRATION_LENGTH = 120
 
 # Konstanten
@@ -42,7 +42,8 @@ def calculate_rs_from_adc(adc_value):
     if adc_value <= 5 or adc_value >= ADC_MAX:
         return None
 
-    return RL * (ADC_MAX / adc_value - 1.0)
+    return (RL * (ADC_MAX / adc_value - 1.0)) / 2.5
+    # return RL * (ADC_MAX / adc_value - 1.0)
 
 
 def calculate_r0_from_rs(rs, reference_ppm=FRESH_AIR_PPM):
