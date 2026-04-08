@@ -15,7 +15,7 @@ RL = 1000.0  # Lastwiderstand
 
 FRESH_AIR_PPM = 420.0
 CALIBRATION_FILE = "calibration.txt"
-AUTO_KALIBRIERUNG = False  # !Wichtig: False!
+AUTO_KALIBRIERUNG = False
 CALIBRATION_LENGTH = 120
 
 # Konstanten
